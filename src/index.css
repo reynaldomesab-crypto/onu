@@ -1,0 +1,31 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --un-dark: #0f172a;
+  }
+
+  body {
+    @apply bg-un-dark text-un-white antialiased;
+    overflow-x: hidden;
+  }
+
+  /* Evitar zoom en doble toque en móviles */
+  button, input, select, textarea {
+    touch-action: manipulation;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    @apply bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}

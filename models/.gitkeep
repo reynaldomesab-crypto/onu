@@ -1,0 +1,2 @@
+# Coloque aquí el archivo veto_model.onnx para predicción local
+# Ruta esperada por la app: /models/veto_model.onnx
