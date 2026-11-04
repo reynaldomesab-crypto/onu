@@ -1,5 +1,5 @@
 /**
- * Tipos y interfaces del dominio del juego "El Arte de lo Posible".
+ * Tipos y interfaces del dominio del juego "¿Puedes cambiar el mundo?".
  *
  * Este archivo define la estructura de datos utilizada en toda la aplicación.
  * Cada interfaz incluye comentarios explicando su propósito y campos.
@@ -24,7 +24,7 @@ export interface Country {
   /** Región geográfica */
   region: string;
   /** Rol actual en el Consejo */
-  role: "P5" | "E10";
+  role: string;
   /** Postura ideológica general (simulada) */
   stance: "cooperativo" | "neutral" | "reservado" | "confrontativo";
 }

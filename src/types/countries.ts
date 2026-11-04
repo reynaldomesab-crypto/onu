@@ -3,13 +3,13 @@
  * Estos datos son placeholders y deben reemplazarse por datos reales de la API
  * o de UNSC-BENCH cuando se conecte al backend.
  *
- * P5 (miembros permanentes con veto): China, Francia, Rusia, Reino Unido, Estados Unidos.
- * E10 (miembros electos, sin veto): rotan cada 2 años.
+ * Miembros permanentes con derecho a veto: China, Francia, Rusia, Reino Unido, Estados Unidos.
+ * Miembros no permanentes (elegidos): rotan cada 2 años.
  */
 import { Country } from "./index";
 
 export const COUNTRIES: Country[] = [
-  // P5 - Miembros permanentes con derecho a veto
+  // Miembros permanentes con derecho a veto
   {
     code: "USA",
     name: "Estados Unidos",
@@ -17,7 +17,7 @@ export const COUNTRIES: Country[] = [
     flag: "🇺🇸",
     isP5: true,
     region: "América",
-    role: "P5",
+    role: "Miembro permanente",
     stance: "cooperativo",
   },
   {
@@ -27,7 +27,7 @@ export const COUNTRIES: Country[] = [
     flag: "🇨🇳",
     isP5: true,
     region: "Asia",
-    role: "P5",
+    role: "Miembro permanente",
     stance: "reservado",
   },
   {
@@ -37,7 +37,7 @@ export const COUNTRIES: Country[] = [
     flag: "🇷🇺",
     isP5: true,
     region: "Europa/Asia",
-    role: "P5",
+    role: "Miembro permanente",
     stance: "confrontativo",
   },
   {
@@ -60,7 +60,7 @@ export const COUNTRIES: Country[] = [
     role: "P5",
     stance: "cooperativo",
   },
-  // E10 - Miembros electos (sin veto)
+  // Miembros no permanentes (elegidos, sin veto)
   {
     code: "BRA",
     name: "Brasil",

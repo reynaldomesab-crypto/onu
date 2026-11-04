@@ -41,3 +41,6 @@ capacitor.config.json
 # OS
 .DS_Store
 Thumbs.db
+
+# Datasets descargados / artefactos binarios
+*.zip

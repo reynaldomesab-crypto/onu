@@ -1,0 +1,102 @@
+name: Actualización Mensual de Datos del Consejo de Seguridad
+
+on:
+  schedule:
+    # Día 1 de cada mes a las 06:00 UTC
+    - cron: '0 6 1 * *'
+  workflow_dispatch:
+    # Permite ejecución manual desde la UI de GitHub
+    inputs:
+      dry-run:
+        description: 'Ejecutar en modo dry-run (solo validar, no escribir)'
+        required: false
+        default: 'false'
+        type: string
+
+concurrency:
+  group: update-data
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout repositorio
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Instalar dependencias
+        run: pnpm install --frozen-lockfile
+
+      - name: Ejecutar actualización de datos
+        id: update-data
+        run: |
+          if [ "${{ github.event.inputs.dry-run }}" = "true" ]; then
+            pnpm run update-data:dry
+          else
+            pnpm run update-data
+          fi
+
+      - name: Verificar cambios en datos
+        id: check-changes
+        run: |
+          if git diff --quiet public/data; then
+            echo "no-changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "no-changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Configurar identidad de Git
+        if: steps.check-changes.outputs.no-changes == 'false'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Hacer commit de datos actualizados
+        if: steps.check-changes.outputs.no-changes == 'false'
+        run: |
+          git add public/data
+          git commit -m "chore(data): actualización mensual de datasets [skip ci]"
+          git push
+
+      - name: Notificar fallo (crear issue)
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const runId = ${{ github.run_id }};
+            const runUrl = `${{ github.server_url }}/${{ github.repository }}/actions/runs/${runId}`;
+            
+            const errorLog = `
+## ⚠️ Fallo en actualización mensual de datos
+
+**Workflow:** Actualización Mensual de Datos del Consejo de Seguridad  
+**Run ID:** \`${runId}\`  
+**URL:** ${runUrl}  
+**Fecha:** ${new Date().toISOString()}
+
+El workflow de actualización de datos falló. Revisa los logs de GitHub Actions para más detalles.
+
+Datasets afectados: revisa el archivo public/data/_update-log.json si se generó.
+`;
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `⚠️ Fallo: actualización mensual de datos - ${new Date().toISOString().split('T')[0]}`,
+              body: errorLog,
+              labels: ["data-update", "failure", "automated"],
+            });

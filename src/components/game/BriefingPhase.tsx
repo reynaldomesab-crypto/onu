@@ -7,7 +7,6 @@ import { useGameStore } from "@/store/useGameStore";
 import { DailyEvent } from "@/types";
 import { Button } from "@/components/ui/Button";
 import { DayBudgetBar } from "@/components/ui/DayBudgetBar";
-import { PlayerRestrictionNotice } from "@/components/ui/PlayerRestrictionNotice";
 import { fetchDailyEvents } from "@/services/apiService";
 import { cn } from "@/utils/cn";
 
@@ -56,28 +55,14 @@ export const BriefingPhase: React.FC = () => {
         <DayBudgetBar day={currentDay} budget={actionBudget} maxBudget={maxActionsPerDay} />
       </div>
 
-      {!isInitialized && playerCountry ? (
+      {isInitialized && playerCountry ? (
         <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6">
-          <h2 className="text-lg font-semibold text-un-white mb-4">Bienvenido al Consejo de Seguridad</h2>
+          <h2 className="text-lg font-semibold text-un-white">Bienvenido al Consejo de Seguridad</h2>
           <p className="text-slate-300 mb-6">
-            Usted preside el Consejo como <strong className="text-e10-green">miembro electo (E10)</strong>.
-            Seleccione su país para comenzar:
+            Usted preside el Consejo como <strong className="text-e10-green">miembro no permanente</strong>.
           </p>
-          <div className="flex flex-wrap gap-2">
-            {playerCountry ? null : (
-              <>
-                {/* Los países E10 se seleccionan desde el menú de país, no aquí directamente */}
-                <p className="text-slate-400 text-sm">
-                  Use el selector de país en la barra superior para elegir su membresía E10.
-                </p>
-              </>
-            )}
-          </div>
         </div>
       ) : null}
-
-      {/* Aviso de restricción del jugador (E10, nunca P5) */}
-      <PlayerRestrictionNotice />
 
       {/* Eventos del día */}
       <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-5">
@@ -129,7 +114,6 @@ export const BriefingPhase: React.FC = () => {
                     size="sm"
                     onClick={() => {
                       markEventAddressed(event.id);
-                      useAction(1);
                     }}
                   >
                     Atender

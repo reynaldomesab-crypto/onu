@@ -1,5 +1,5 @@
 /**
- * Store de Zustand para la gestión del estado del juego "El Arte de lo Posible".
+ * Store de Zustand para la gestión del estado del juego "¿Puedes cambiar el mundo?".
  *
  * Este store centraliza todo el estado del juego:
  *   - Día actual y fase de la máquina de estados
@@ -31,7 +31,7 @@ import { DAILY_EVENTS } from "@/types/events";
 import { CLAUSES } from "@/types/clauses";
 
 // Configuración del presupuesto de acciones
-const MAX_ACTIONS_PER_DAY = 3;
+const MAX_ACTIONS_PER_DAY = 1;
 
 /**
  * Genera un ID único simple.
@@ -98,8 +98,8 @@ export const useGameStore = create<GameState & {
 
       /**
        * Inicializa el juego seleccionando el país del jugador.
-       * El jugador siempre debe ser un E10 (miembro electo).
-       * Nunca se permite seleccionar un P5.
+       * El jugador siempre debe ser un miembro no permanente.
+       * Nunca se permite seleccionar un miembro permanente.
        */
       initGame: (playerCountryCode: string) => {
         const country = getCountryByCode(playerCountryCode);
@@ -111,7 +111,7 @@ export const useGameStore = create<GameState & {
         if (country.isP5) {
           set({
             error:
-              "No se puede seleccionar un miembro permanente (P5) como país del jugador. El jugador debe ser un miembro electo (E10).",
+              "No se puede seleccionar un miembro permanente como país del jugador. Debe ser un miembro no permanente.",
           });
           return;
         }
@@ -176,7 +176,7 @@ export const useGameStore = create<GameState & {
       },
 
       /**
-       * Establece el país del jugador. Solo permite E10.
+       * Establece el país del jugador. Solo permite miembro no permanente.
        */
       setPlayerCountry: (code: string) => {
         const country = getCountryByCode(code);
@@ -186,7 +186,7 @@ export const useGameStore = create<GameState & {
         }
         if (country.isP5) {
           set({
-            error: "El jugador no puede ser un miembro permanente (P5). Seleccione un E10.",
+            error: "El jugador no puede ser un miembro permanente. Seleccione un miembro no permanente.",
           });
           return false;
         }

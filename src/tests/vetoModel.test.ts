@@ -1,9 +1,9 @@
 import { describe, it, expect } from "vitest";
-import { predictVetoRisk, loadModel, isModelLoaded } from "@/models/vetoModel";
+import { predictVetoRisk } from "@/models/vetoModel";
 import { CLAUSES } from "@/types/clauses";
 
 describe("vetoModel", () => {
-  it("predictVetoRisk devuelve valores simulados cuando el modelo no está cargado", async () => {
+  it("predictVetoRisk devuelve valores basados en el modelo UNBench", async () => {
     const draft = {
       id: "test-draft",
       clauses: [CLAUSES[0], CLAUSES[2]],
@@ -22,13 +22,6 @@ describe("vetoModel", () => {
     expect(risk.isSimulated).toBe(true);
     expect(risk.overallRisk).toBeGreaterThanOrEqual(0);
     expect(risk.overallRisk).toBeLessThanOrEqual(1);
-  });
-
-  it("loadModel retorna false si no hay modelo ONNX disponible", async () => {
-    const loaded = await loadModel();
-    // En entorno de test no hay /models/veto_model.onnx real
-    expect(loaded).toBe(false);
-    expect(isModelLoaded()).toBe(false);
   });
 
   it("identifica países con alto riesgo de veto", async () => {

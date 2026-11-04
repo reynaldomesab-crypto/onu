@@ -67,7 +67,7 @@ export const Home: React.FC = () => {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-un-white">
-                  El Arte de lo Posible
+                  ¿Puedes cambiar el mundo?
                 </h1>
                 <p className="text-xs text-slate-400">
                   Consejo de Seguridad de la ONU - Datos en vivo
@@ -278,7 +278,7 @@ export const Home: React.FC = () => {
         <div className="max-w-6xl mx-auto px-4 py-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <p className="text-sm text-slate-500">
-              El Arte de lo Posible © 2026 - Datos de la ONU
+              ¿Puedes cambiar el mundo? © 2026 - Datos de la ONU
             </p>
             <div className="flex items-center gap-4 text-sm text-slate-500">
               <span>React 18</span>
