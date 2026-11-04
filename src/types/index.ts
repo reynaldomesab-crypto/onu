@@ -76,7 +76,7 @@ export interface Draft {
  * Generado por predictVetoRisk() tras analizar un borrador.
  */
 export interface VetoRisk {
-  /** Riesgo global de veto (0.0 = ninguno, 1.0 = seguro) */
+  /** Riesgo global de veto (0.0 = mínimo riesgo, 1.0 = máximo riesgo) */
   overallRisk: number;
   /** Riesgo por cada país P5 (clave: código ISO) */
   riskByCountry: Record<string, number>;

@@ -140,6 +140,12 @@ export const useGameStore = create<GameState & {
           pendingConsequence: null,
           consequences: [],
           activeNegotiationSolution: null,
+          currentDraft: null,
+          draftHistory: [],
+          lastVetoRisk: null,
+          lastVoteResult: null,
+          historicalResult: null,
+          isLoading: false,
         });
       },
 
@@ -169,12 +175,20 @@ export const useGameStore = create<GameState & {
         const pending = get().pendingConsequence;
         const consequences = [...get().consequences];
         let nextPendingConsequence = pending;
+        let phase: GamePhase = "BRIEFING";
+        let justPublished = false;
 
         // Publicar consecuencias cuando corresponde (aprobaciones con espera de 2-3 días)
         if (pending && newDay >= pending.publishedDay) {
-          const published: GameConsequence = { ...pending, publishedDay: newDay };
+          const published: GameConsequence = {
+            ...pending,
+            publishedDay: newDay,
+            daysUntilPublication: 0,
+          };
           consequences.push(published);
           nextPendingConsequence = null;
+          justPublished = true;
+          phase = "REVEAL";
           showToast(
             `Consecuencias publicadas: resolución "${pending.title}" — ${published.aidFamiliesReached} familias alcanzadas, logística con ${published.logisticsOvercostPct}% de sobrecosto.`,
             "info"
@@ -185,14 +199,17 @@ export const useGameStore = create<GameState & {
         set({
           currentDay: newDay,
           actionBudget: MAX_ACTIONS_PER_DAY,
-          phase: "BRIEFING",
-          currentDraft: null,
-          lastVetoRisk: null,
-          lastVoteResult: null,
-          chatMessages: [],
-          dailyEvents: [...DAILY_EVENTS].map((e) => ({ ...e, addressed: false })),
+          phase,
+          currentDraft: justPublished ? get().currentDraft : null,
+          lastVetoRisk: justPublished ? get().lastVetoRisk : null,
+          lastVoteResult: justPublished ? get().lastVoteResult : null,
+          chatMessages: justPublished ? get().chatMessages : [],
+          dailyEvents: justPublished
+            ? get().dailyEvents
+            : [...DAILY_EVENTS].map((e) => ({ ...e, addressed: false })),
           consequences,
           pendingConsequence: nextPendingConsequence,
+          activeNegotiationSolution: null,
         });
       },
 
@@ -333,7 +350,7 @@ export const useGameStore = create<GameState & {
         if (currentDraft.clauses.length === 0) {
           set({ error: "El borrador debe tener al menos una cláusula." });
           // Devolver la acción si no se puede presentar
-          set((state: any) => ({ actionBudget: state.actionBudget + 1 }));
+          set({ actionBudget: get().actionBudget + 1 });
           return;
         }
 
@@ -382,8 +399,8 @@ export const useGameStore = create<GameState & {
               approved: true,
               publishedDay: get().currentDay + daysUntilPublication,
               daysUntilPublication,
-              aidFamiliesReached: Math.floor(Math.random() * 450) + 50, // 50-500 familias
-              logisticsOvercostPct: Math.floor(Math.random() * 25) + 5, // 5-30% sobrecosto
+              aidFamiliesReached: Math.floor(Math.random() * 450) + 50, // 50-499 familias (rango 50-500)
+              logisticsOvercostPct: Math.floor(Math.random() * 25) + 5, // 5-29% sobrecosto (rango 5-30)
               missionEffective: Math.random() > 0.3,
               secondaryRisks: [],
             };
@@ -393,7 +410,7 @@ export const useGameStore = create<GameState & {
             lastVoteResult: voteResult,
             currentDraft: completedDraft,
             draftHistory: [...get().draftHistory, completedDraft],
-            phase: "REVEAL",
+            phase: "VOTING",
             isLoading: false,
             pendingConsequence,
           });

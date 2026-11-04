@@ -26,9 +26,7 @@ export const VotingPhase: React.FC = () => {
     if (currentDraft && !lastVetoRisk) {
       (async () => {
         try {
-          const risk = await predictVetoRisk(currentDraft);
-          // El store se actualiza via submitDraft, pero aquí se puede precargar
-          console.log("Riesgo de veto calculado:", risk);
+          await predictVetoRisk(currentDraft);
         } catch (err) {
           console.error("Error calculando riesgo de veto:", err);
         }

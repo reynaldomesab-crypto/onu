@@ -18,6 +18,9 @@ import {
   getSolutionsForScenario,
 } from "@/types/negotiations";
 
+/** Límite de temas a negociar por día (las opciones de solución son ilimitadas). */
+const MAX_TOPICS_PER_DAY = 2;
+
 export const NegotiationPhase: React.FC = () => {
   const {
     currentDay,
@@ -51,8 +54,6 @@ export const NegotiationPhase: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages]);
 
-  const MAX_TOPICS_PER_DAY = 2;
-
   const activeScenario: NegotiationScenario | null =
     NEGOTIATION_SCENARIOS.find((s) => s.id === activeScenarioId) ?? null;
 
@@ -69,6 +70,8 @@ export const NegotiationPhase: React.FC = () => {
     // Límite de temas a negociar por día (las opciones de solución son ilimitadas)
     if (negotiatedTopics.includes(scenarioId)) return;
     if (negotiatedTopics.length >= MAX_TOPICS_PER_DAY) return;
+    // Iniciar un tema de negociación es una acción completada
+    if (!useAction(1)) return;
     setActiveScenarioId(scenarioId);
     setNegotiatedTopics((prev) => [...prev, scenarioId]);
   };
@@ -89,13 +92,6 @@ export const NegotiationPhase: React.FC = () => {
       countryCode,
       `Embajador de ${country.nameEs}: Hemos recibido su consulta. Nuestra posición sobre este asunto es ${country.stance}. Estamos dispuestos a conversar si hay respeto mutuo.`
     );
-  };
-
-  const handleSelectScenario = (scenario: NegotiationScenario) => {
-    // Seleccionar una propuesta activa de los problemas graves actuales
-    // inicia una negociación formal (cuesta 1 acción).
-    if (!useAction(1)) return;
-    addPlayerMessage(`Propongo: ${scenario.title}. ${scenario.description}`);
   };
 
   const handleNextPhase = () => {
@@ -183,27 +179,6 @@ export const NegotiationPhase: React.FC = () => {
               Enviar
             </Button>
           </form>
-        </div>
-      </div>
-
-      {/* Propuestas activas basadas en los problemas graves actuales */}
-      <div className="mt-4">
-        <h3 className="text-sm font-semibold text-slate-300 mb-3 uppercase tracking-wider">
-          Propuestas activas
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
-          {NEGOTIATION_SCENARIOS.map((scenario) => (
-            <button
-              key={scenario.id}
-              type="button"
-              onClick={() => handleSelectScenario(scenario)}
-              disabled={actionBudget < 1 || isLoading}
-              className="text-left p-3 rounded-xl border border-slate-700 bg-slate-800/50 hover:border-un-blue/50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <p className="text-sm font-semibold text-un-white">{scenario.title}</p>
-              <p className="text-xs text-slate-400 mt-1">{scenario.description}</p>
-            </button>
-          ))}
         </div>
       </div>
 
