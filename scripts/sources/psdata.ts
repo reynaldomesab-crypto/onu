@@ -35,14 +35,31 @@ export interface PSMetadata {
   recordCount?: number;
 }
 
-// Esquema de validación para la respuesta de datos
-const PSDataSchema = z.object({
+// Esquema de validación para la respuesta de datos.
+// Acepta tanto un objeto con paginación como un array plano (formato actual de la API).
+const PSDataResponseSchema = z.object({
   data: z.array(z.any()),
   total: z.number(),
   page: z.number(),
   per_page: z.number(),
   total_pages: z.number(),
 });
+
+const PSDataSchema = z.union([PSDataResponseSchema, z.array(z.any())]);
+
+/**
+ * Extrae los registros del resultado parseado, sin importar el formato.
+ */
+function extractRecords(parsed: unknown): any[] {
+  if (Array.isArray(parsed)) {
+    return parsed;
+  }
+  const payload = parsed as { data?: any[] };
+  if (payload && Array.isArray(payload.data)) {
+    return payload.data;
+  }
+  throw new Error("Formato de respuesta inválido: no se encontraron registros");
+}
 
 /**
  * Espera un tiempo dado (para backoff exponencial)
@@ -136,11 +153,9 @@ async function fetchWithRetry(
 }
 
 /**
- * Parsea y valida la respuesta JSON de PSData
+ * Parsea y valida la respuesta JSON de PSData, devolviendo los registros.
  */
-async function parsePSDataResponse<T = any>(
-  response: Response
-): Promise<PSDataResponse<T>> {
+async function parsePSDataResponse(response: Response): Promise<any[]> {
   const text = await response.text();
   let data: any;
 
@@ -152,13 +167,11 @@ async function parsePSDataResponse<T = any>(
 
   const parsed = PSDataSchema.safeParse(data);
   if (!parsed.success) {
-    const errorMessages = (parsed.error.issues as Array<{ message: string }>).map(
-      (e) => e.message
-    );
-    throw new Error(`Formato de respuesta inválido: ${errorMessages.join(", ")}`);
+    const errorMessages = parsed.error.issues.map((e) => e.message).join(", ");
+    throw new Error(`Formato de respuesta inválido: ${errorMessages}`);
   }
 
-  return parsed.data;
+  return extractRecords(parsed.data);
 }
 
 // ============================================================================
@@ -190,9 +203,9 @@ export async function fetchDataset(
   const url = `${BASE_URL}/data/${datasetId}/json${params.toString() ? "?" + params.toString() : ""}`;
 
   const response = await fetchWithRetry(url);
-  const parsed = await parsePSDataResponse(response);
+  const records = await parsePSDataResponse(response);
 
-  return parsed.data;
+  return records;
 }
 
 /**
@@ -238,13 +251,14 @@ export async function fetchAllPages(
     const response = await fetchWithRetry(
       `${BASE_URL}/data/${datasetId}/json?per_page=${perPage}&page_num=${currentPage}`
     );
-    const parsed = await parsePSDataResponse(response);
+    const parsed: any = await parsePSDataResponse(response);
 
-    allData.push(...parsed.data);
-    totalPages = parsed.total_pages;
+    allData.push(...parsed);
+    const pageInfo: any = Array.isArray(parsed) ? { total_pages: 1 } : parsed;
+    totalPages = pageInfo.total_pages;
 
     console.log(
-      `[PSData] Página ${currentPage}/${totalPages} - ${parsed.data.length} registros`
+      `[PSData] Página ${currentPage}/${totalPages} - ${parsed.length} registros`
     );
 
     currentPage++;
