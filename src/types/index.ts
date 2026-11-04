@@ -174,6 +174,32 @@ export interface HistoricalResult {
 }
 
 /**
+ * Consecuencia publicada tras la aprobación de una resolución.
+ * Se publica con una espera de 2-3 días y con variabilidad lógica
+ * en los efectos (ayuda humanitaria, logística, etc.).
+ */
+export interface GameConsequence {
+  /** ID de la resolución aprobada */
+  resolutionId: string;
+  /** Título de la resolución */
+  title: string;
+  /** Si fue aprobada */
+  approved: boolean;
+  /** Día en que se publicó el resultado */
+  publishedDay: number;
+  /** Días que faltaban para la publicación */
+  daysUntilPublication: number;
+  /** Familias alcanzadas por la ayuda (variabilidad lógica) */
+  aidFamiliesReached: number;
+  /** Sobrecargo de la logística (% sobre el presupuesto planificado) */
+  logisticsOvercostPct: number;
+  /** ¿La misión de paz fue efectiva? */
+  missionEffective: boolean;
+  /** Riesgos secundarios registrados (coherencia lógica) */
+  secondaryRisks: string[];
+}
+
+/**
  * Fases de la máquina de estados del juego.
  */
 export type GamePhase =
@@ -219,6 +245,10 @@ export interface GameState {
   lastVoteResult: VoteResult | null;
   /** Resultado histórico para comparar */
   historicalResult: HistoricalResult | null;
+  /** Consecuencia pendiente de una resolución aprobada (por publicar) */
+  pendingConsequence: GameConsequence | null;
+  /** Historial de consecuencias publicadas */
+  consequences: GameConsequence[];
   /** Si el juego está inicializado */
   isInitialized: boolean;
   /** Si hay una acción en curso (loading) */

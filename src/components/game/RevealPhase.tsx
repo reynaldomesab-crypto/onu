@@ -21,6 +21,8 @@ export const RevealPhase: React.FC = () => {
     setPhase,
     nextDay,
     lastVetoRisk,
+    pendingConsequence,
+    consequences,
   } = useGameStore();
 
   const handleNewDay = () => {
@@ -43,8 +45,12 @@ export const RevealPhase: React.FC = () => {
     );
   }
 
-  const approved = lastVoteResult.approved;
-  const vetoes = lastVoteResult.vetoes;
+  const approved = lastVoteResult ? lastVoteResult.approved : false;
+  const vetoes = lastVoteResult ? lastVoteResult.vetoes : [];
+  const pending = approved ? pendingConsequence : null;
+  const published = pending
+    ? consequences.find((c) => c.resolutionId === currentDraft?.id) ?? null
+    : null;
 
   return (
     <div className="p-4 space-y-6">
@@ -148,6 +154,41 @@ export const RevealPhase: React.FC = () => {
               ? "Nota: La predicción se realizó en modo simulado (modelo ONNX no cargado)."
               : "Nota: La predicción se realizó con el modelo ONNX local."}
           </p>
+        </div>
+      )}
+
+      {/* Espera de publicación de consecuencias (si fue aprobada) */}
+      {approved && pending && !published && (
+        <div className="bg-slate-800/50 border border-un-blue/30 rounded-xl p-5 text-center">
+          <h2 className="text-lg font-semibold text-un-white mb-2">Publicación Programada</h2>
+          <p className="text-sm text-slate-300">
+            La resolución aprobada se publicará como resultado de la redacción en{" "}
+            <span className="font-semibold text-un-white">{pending.daysUntilPublication} días</span>.
+          </p>
+        </div>
+      )}
+
+      {/* Consecuencias publicadas de la resolución aprobada */}
+      {published && (
+        <div className="bg-slate-800/50 border border-emerald-500/30 rounded-xl p-5">
+          <h2 className="text-lg font-semibold text-un-white mb-4">Consecuencias Publicadas</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="p-3 rounded-lg bg-slate-900/30">
+              <p className="text-xs text-slate-400 uppercase">Familias alcanzadas (ayuda)</p>
+              <p className="text-xl font-bold text-e10-green">{published.aidFamiliesReached}</p>
+            </div>
+            <div className="p-3 rounded-lg bg-slate-900/30">
+              <p className="text-xs text-slate-400 uppercase">Sobrecosto logístico</p>
+              <p className="text-xl font-bold text-amber-400">{published.logisticsOvercostPct}%</p>
+            </div>
+            <div className="p-3 rounded-lg bg-slate-900/30">
+              <p className="text-xs text-slate-400 uppercase">Efectividad de la misión</p>
+              <p className="text-xl font-bold text-un-blue">{published.missionEffective ? "Efectiva" : "Inefectiva"}</p>
+            </div>
+          </div>
+          {published.secondaryRisks.length > 0 && (
+            <p className="text-xs text-slate-400 mt-3">Riesgos secundarios: {published.secondaryRisks.join(", ")}</p>
+          )}
         </div>
       )}
 

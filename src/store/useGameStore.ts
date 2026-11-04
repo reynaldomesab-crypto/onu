@@ -23,6 +23,7 @@ import {
   VoteResult,
   HistoricalResult,
   VetoRisk,
+  GameConsequence,
   Country,
   DailyEvent,
 } from "@/types";
@@ -63,6 +64,8 @@ const initialState: GameState = {
   lastVetoRisk: null,
   lastVoteResult: null,
   historicalResult: null,
+  pendingConsequence: null,
+  consequences: [],
   isInitialized: false,
   isLoading: false,
   error: null,
@@ -91,6 +94,8 @@ export const useGameStore = create<GameState & {
   setVetoRisk: (risk: VetoRisk) => void;
   setVoteResult: (result: VoteResult) => void;
   setHistoricalResult: (result: HistoricalResult) => void;
+  setPendingConsequence: (consequence: GameConsequence | null) => void;
+  setConsequences: (consequences: GameConsequence[]) => void;
   markEventAddressed: (eventId: string) => void;
   resetGame: () => void;
   setError: (message: string | null) => void;
@@ -129,6 +134,8 @@ export const useGameStore = create<GameState & {
           dailyEvents: [...DAILY_EVENTS],
           actionHistory: [],
           chatMessages: [],
+          pendingConsequence: null,
+          consequences: [],
         });
       },
 
@@ -140,13 +147,39 @@ export const useGameStore = create<GameState & {
       },
 
       /**
-       * Avanza al día siguiente, restaurando el presupuesto de acciones.
+       * Avanza al día siguiente, consumiendo una acción del presupuesto.
+       * Si hay una resolución aprobada con consecuencias pendientes,
+       * las publica automáticamente cuando llega el día previsto (2-3 días).
        */
       nextDay: () => {
         const { currentDay } = get();
+
+        // Avanzar el tiempo consume una acción del presupuesto diario
+        const spent = get().useAction(1);
+        if (!spent) {
+          set({ error: "No hay acciones disponibles para avanzar el tiempo." });
+          return;
+        }
+
+        const newDay = currentDay + 1;
+        const pending = get().pendingConsequence;
+        const consequences = [...get().consequences];
+        let nextPendingConsequence = pending;
+
+        // Publicar consecuencias cuando corresponde (aprobaciones con espera de 2-3 días)
+        if (pending && newDay >= pending.publishedDay) {
+          const published: GameConsequence = { ...pending, publishedDay: newDay };
+          consequences.push(published);
+          nextPendingConsequence = null;
+          showToast(
+            `Consecuencias publicadas: resolución "${pending.title}" — ${published.aidFamiliesReached} familias alcanzadas, logística con ${published.logisticsOvercostPct}% de sobrecosto.`,
+            "info"
+          );
+        }
+
         // Si quedan acciones sin usar, se pierden al cambiar de día (no se acumulan)
         set({
-          currentDay: currentDay + 1,
+          currentDay: newDay,
           actionBudget: MAX_ACTIONS_PER_DAY,
           phase: "BRIEFING",
           currentDraft: null,
@@ -154,6 +187,8 @@ export const useGameStore = create<GameState & {
           lastVoteResult: null,
           chatMessages: [],
           dailyEvents: [...DAILY_EVENTS].map((e) => ({ ...e, addressed: false })),
+          consequences,
+          pendingConsequence: nextPendingConsequence,
         });
       },
 
@@ -333,12 +368,30 @@ export const useGameStore = create<GameState & {
             status: voteResult.approved ? "aprobado" : "rechazado",
           };
 
+          // 3.5 Si fue aprobada, programar la publicación de las consecuencias (espera de 2-3 días)
+          let pendingConsequence: GameConsequence | null = null;
+          if (approved) {
+            const daysUntilPublication = Math.floor(Math.random() * 2) + 2; // 2-3 días
+            pendingConsequence = {
+              resolutionId: currentDraft.id,
+              title: currentDraft.clauses[0]?.text ?? "Resolución del Consejo",
+              approved: true,
+              publishedDay: get().currentDay + daysUntilPublication,
+              daysUntilPublication,
+              aidFamiliesReached: Math.floor(Math.random() * 450) + 50, // 50-500 familias
+              logisticsOvercostPct: Math.floor(Math.random() * 25) + 5, // 5-30% sobrecosto
+              missionEffective: Math.random() > 0.3,
+              secondaryRisks: [],
+            };
+          }
+
           set({
             lastVoteResult: voteResult,
             currentDraft: completedDraft,
             draftHistory: [...get().draftHistory, completedDraft],
             phase: "REVEAL",
             isLoading: false,
+            pendingConsequence,
           });
 
           // 4. Avisar al jugador del resultado de la redacción/votación
@@ -454,6 +507,20 @@ export const useGameStore = create<GameState & {
        */
       setHistoricalResult: (result: HistoricalResult) => {
         set({ historicalResult: result });
+      },
+
+      /**
+       * Establece la consecuencia pendiente de publicación de una resolución aprobada.
+       */
+      setPendingConsequence: (consequence: GameConsequence | null) => {
+        set({ pendingConsequence: consequence });
+      },
+
+      /**
+       * Establece el historial de consecuencias publicadas.
+       */
+      setConsequences: (consequences: GameConsequence[]) => {
+        set({ consequences });
       },
 
       /**
