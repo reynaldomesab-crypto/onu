@@ -29,9 +29,12 @@ import {
 import { E10_COUNTRIES, COUNTRIES, getCountryByCode } from "@/types/countries";
 import { DAILY_EVENTS } from "@/types/events";
 import { CLAUSES } from "@/types/clauses";
+import { showToast } from "@/utils/toast";
 
-// Configuración del presupuesto de acciones
-const MAX_ACTIONS_PER_DAY = 1;
+// Configuración del presupuesto de acciones por día.
+// Número limitado de acciones diarias (diplomacia, redacción, voto, etc.).
+// Ajustado a 3 para permitir testear la aplicación con un ritmo de juego cómodo.
+const MAX_ACTIONS_PER_DAY = 3;
 
 /**
  * Genera un ID único simple.
@@ -295,28 +298,36 @@ export const useGameStore = create<GameState & {
           return;
         }
 
-        set({ isLoading: true, phase: "VOTING", error: null });
+        // Redacción en segundo plano: la fase se mantiene en DRAFTING mientras se procesa
+        set({ isLoading: true, phase: "DRAFTING", error: null });
 
         try {
-          // 1. Predecir riesgo de veto usando el modelo ONNX (o simulado)
+          // 1. Predecir riesgo de veto usando el modelo UNBench (o simulado)
           const { predictVetoRisk } = await import("@/models/vetoModel");
           const vetoRisk = await predictVetoRisk(currentDraft);
           set({ lastVetoRisk: vetoRisk });
 
-          // 2. Simular resultado de votación
-          // Si hay vetoes probables, marcar la resolución como rechazada
+          // 2. Simular el resultado de la votación con aleatoriedad.
+          //    Si hay vetos probables, la probabilidad de adopción se ajusta al riesgo global.
           const likelyVetoers = vetoRisk.likelyVetoers;
-          const vetoes = likelyVetoers; // En simulación, los likelyVetoers ejercen veto
+          const approvalChance =
+            likelyVetoers.length === 0
+              ? 0.85
+              : Math.max(0.05, 1 - vetoRisk.overallRisk);
+          const approved = Math.random() < approvalChance;
+          const vetoes = approved ? [] : likelyVetoers;
 
           const voteResult: VoteResult = {
             votesFor: Math.floor(Math.random() * 5) + 5,
-            votesAgainst: Math.floor(Math.random() * 4),
+            votesAgainst: approved
+              ? Math.floor(Math.random() * 2)
+              : Math.floor(Math.random() * 3) + 1,
             abstentions: Math.floor(Math.random() * 3),
             vetoes,
-            approved: vetoes.length === 0 && Math.random() > 0.3,
+            approved,
           };
 
-          // 3. Actualizar estado del borrador
+          // 3. Actualizar estado del borrador con el resultado de la redacción
           const completedDraft: Draft = {
             ...currentDraft,
             status: voteResult.approved ? "aprobado" : "rechazado",
@@ -329,6 +340,19 @@ export const useGameStore = create<GameState & {
             phase: "REVEAL",
             isLoading: false,
           });
+
+          // 4. Avisar al jugador del resultado de la redacción/votación
+          if (voteResult.approved) {
+            showToast(
+              "Redacción completada: su resolución fue APROBADA por el Consejo.",
+              "success"
+            );
+          } else {
+            showToast(
+              "Redacción completada: su resolución fue RECHAZADA (posible veto).",
+              "warning"
+            );
+          }
         } catch (err) {
           set({
             error: "Error al presentar el borrador para votación.",

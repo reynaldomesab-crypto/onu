@@ -7,7 +7,7 @@ describe("useGameStore", () => {
     useGameStore.setState({
       currentDay: 1,
       phase: "BRIEFING",
-      actionBudget: 1,
+      actionBudget: 3,
       playerCountry: null,
       isInitialized: false,
     });
@@ -26,7 +26,7 @@ describe("useGameStore", () => {
     expect(useGameStore.getState().isInitialized).toBe(true);
     expect(useGameStore.getState().playerCountry?.code).toBe(e10.code);
     expect(useGameStore.getState().phase).toBe("BRIEFING");
-    expect(useGameStore.getState().actionBudget).toBe(1);
+    expect(useGameStore.getState().actionBudget).toBe(3);
   });
 
   it("gasta acciones correctamente", () => {
@@ -34,17 +34,18 @@ describe("useGameStore", () => {
     useGameStore.getState().initGame(e10.code);
     const result = useGameStore.getState().useAction(1);
     expect(result).toBe(true);
-    expect(useGameStore.getState().actionBudget).toBe(0);
+    expect(useGameStore.getState().actionBudget).toBe(2);
   });
 
   it("no permite gastar más acciones de las disponibles", () => {
     const e10 = E10_COUNTRIES[0];
     useGameStore.getState().initGame(e10.code);
-    const first = useGameStore.getState().useAction(1);
-    expect(first).toBe(true);
-    const second = useGameStore.getState().useAction(1);
-    expect(second).toBe(false);
-    expect(useGameStore.getState().actionBudget).toBe(0);
+    // Gastar 2 de las 3 acciones del día
+    expect(useGameStore.getState().useAction(2)).toBe(true);
+    // Ya no queda presupuesto suficiente para una acción de mayor costo
+    const result = useGameStore.getState().useAction(2);
+    expect(result).toBe(false);
+    expect(useGameStore.getState().actionBudget).toBe(1);
   });
 
   it("crea un borrador y añade cláusulas", () => {
@@ -63,10 +64,10 @@ describe("useGameStore", () => {
     const e10 = E10_COUNTRIES[0];
     useGameStore.getState().initGame(e10.code);
     useGameStore.getState().useAction(1);
-    expect(useGameStore.getState().actionBudget).toBe(0);
+    expect(useGameStore.getState().actionBudget).toBe(2);
 
     useGameStore.getState().nextDay();
     expect(useGameStore.getState().currentDay).toBe(2);
-    expect(useGameStore.getState().actionBudget).toBe(1);
+    expect(useGameStore.getState().actionBudget).toBe(3);
   });
 });

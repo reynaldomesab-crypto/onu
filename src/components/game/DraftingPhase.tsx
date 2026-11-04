@@ -29,6 +29,7 @@ export const DraftingPhase: React.FC = () => {
     setDraftTone,
     clearDraft,
     submitDraft,
+    isLoading,
   } = useGameStore();
 
   const [draftTone, setDraftToneLocal] = useState<Draft["tone"]>("equilibrado");
@@ -262,10 +263,12 @@ export const DraftingPhase: React.FC = () => {
               variant="primary"
               size="lg"
               onClick={handleSubmit}
-              disabled={currentDraft.clauses.length === 0 || actionBudget < 1}
+              disabled={
+                currentDraft.clauses.length === 0 || actionBudget < 1 || isLoading
+              }
               className={currentDraft.clauses.length === 0 ? "opacity-50" : ""}
             >
-              Presentar a Votación (1 acción)
+              Presentar a Votación (Redacción en segundo plano)
             </Button>
           </div>
         </div>
