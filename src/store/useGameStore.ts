@@ -24,6 +24,7 @@ import {
   HistoricalResult,
   VetoRisk,
   GameConsequence,
+  NegotiationSolution,
   Country,
   DailyEvent,
 } from "@/types";
@@ -66,6 +67,7 @@ const initialState: GameState = {
   historicalResult: null,
   pendingConsequence: null,
   consequences: [],
+  activeNegotiationSolution: null,
   isInitialized: false,
   isLoading: false,
   error: null,
@@ -96,6 +98,7 @@ export const useGameStore = create<GameState & {
   setHistoricalResult: (result: HistoricalResult) => void;
   setPendingConsequence: (consequence: GameConsequence | null) => void;
   setConsequences: (consequences: GameConsequence[]) => void;
+  setActiveNegotiationSolution: (solution: NegotiationSolution | null) => void;
   markEventAddressed: (eventId: string) => void;
   resetGame: () => void;
   setError: (message: string | null) => void;
@@ -136,6 +139,7 @@ export const useGameStore = create<GameState & {
           chatMessages: [],
           pendingConsequence: null,
           consequences: [],
+          activeNegotiationSolution: null,
         });
       },
 
@@ -521,6 +525,10 @@ export const useGameStore = create<GameState & {
        */
       setConsequences: (consequences: GameConsequence[]) => {
         set({ consequences });
+      },
+
+      setActiveNegotiationSolution: (solution: NegotiationSolution | null) => {
+        set({ activeNegotiationSolution: solution });
       },
 
       /**

@@ -6,7 +6,6 @@ import React, { useEffect } from "react";
 import { useGameStore } from "@/store/useGameStore";
 import { Button } from "@/components/ui/Button";
 import { DayBudgetBar } from "@/components/ui/DayBudgetBar";
-import { PlayerRestrictionNotice } from "@/components/ui/PlayerRestrictionNotice";
 import { Badge } from "@/components/ui/Badge";
 import { CountryBadge } from "@/components/ui/CountryBadge";
 import { predictVetoRisk } from "@/models/vetoModel";
@@ -57,7 +56,6 @@ export const VotingPhase: React.FC = () => {
         <DayBudgetBar day={currentDay} budget={actionBudget} maxBudget={maxActionsPerDay} />
       </div>
 
-      <PlayerRestrictionNotice />
 
       {!currentDraft ? (
         <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 text-center">

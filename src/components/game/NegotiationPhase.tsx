@@ -8,11 +8,15 @@ import { useGameStore } from "@/store/useGameStore";
 import { Country } from "@/types";
 import { Button } from "@/components/ui/Button";
 import { DayBudgetBar } from "@/components/ui/DayBudgetBar";
-import { PlayerRestrictionNotice } from "@/components/ui/PlayerRestrictionNotice";
 import { PhaseHeader } from "@/components/ui/PhaseHeader";
 import { ScrollArea } from "@/components/game/ScrollArea";
 import { cn } from "@/utils/cn";
-import { NEGOTIATION_SCENARIOS, NegotiationScenario } from "@/types/negotiations";
+import {
+  NEGOTIATION_SCENARIOS,
+  NegotiationScenario,
+  NegotiationSolution,
+  getSolutionsForScenario,
+} from "@/types/negotiations";
 
 export const NegotiationPhase: React.FC = () => {
   const {
@@ -28,14 +32,29 @@ export const NegotiationPhase: React.FC = () => {
     addPlayerMessage,
     addAiResponse,
     isLoading,
+    setActiveNegotiationSolution,
   } = useGameStore();
 
   const [inputText, setInputText] = useState("");
+  const [activeScenarioId, setActiveScenarioId] = useState<string | null>(null);
+  const [negotiatedTopics, setNegotiatedTopics] = useState<string[]>([]);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Al cambiar de día se reinician las negociaciones del día
+    setNegotiatedTopics([]);
+    setActiveScenarioId(null);
+  }, [currentDay]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatMessages]);
+
+  const MAX_TOPICS_PER_DAY = 2;
+
+  const activeScenario: NegotiationScenario | null =
+    NEGOTIATION_SCENARIOS.find((s) => s.id === activeScenarioId) ?? null;
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -44,6 +63,20 @@ export const NegotiationPhase: React.FC = () => {
 
     addPlayerMessage(inputText);
     setInputText("");
+  };
+
+  const handleStartNegotiation = (scenarioId: string) => {
+    // Límite de temas a negociar por día (las opciones de solución son ilimitadas)
+    if (negotiatedTopics.includes(scenarioId)) return;
+    if (negotiatedTopics.length >= MAX_TOPICS_PER_DAY) return;
+    setActiveScenarioId(scenarioId);
+    setNegotiatedTopics((prev) => [...prev, scenarioId]);
+  };
+
+  const handleSelectSolution = (solution: NegotiationSolution) => {
+    // Seleccionar una solución dentro de la negociación (opciones ilimitadas)
+    setActiveNegotiationSolution(solution);
+    addPlayerMessage(`Propongo: ${solution.title}. ${solution.description}`);
   };
 
   const handleTalkToCountry = (countryCode: string) => {
@@ -82,8 +115,6 @@ export const NegotiationPhase: React.FC = () => {
         </div>
         <DayBudgetBar day={currentDay} budget={actionBudget} maxBudget={maxActionsPerDay} />
       </div>
-
-      <PlayerRestrictionNotice />
 
       {/* Área de chat */}
       <div className="flex-1 bg-slate-900/40 border border-slate-700 rounded-xl overflow-hidden flex flex-col">
@@ -174,6 +205,54 @@ export const NegotiationPhase: React.FC = () => {
             </button>
           ))}
         </div>
+      </div>
+
+      {/* Problema actual y soluciones propuestas */}
+      <div className="mt-4">
+        <h3 className="text-sm font-semibold text-slate-300 mb-3 uppercase tracking-wider">
+          Problema actual
+        </h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 mb-4">
+          {NEGOTIATION_SCENARIOS.map((scenario) => (
+            <Button
+              key={scenario.id}
+              variant={activeScenarioId === scenario.id ? "primary" : "outline"}
+              size="sm"
+              disabled={negotiatedTopics.includes(scenario.id) || negotiatedTopics.length >= MAX_TOPICS_PER_DAY}
+              onClick={() => handleStartNegotiation(scenario.id)}
+            >
+              {scenario.title}
+            </Button>
+          ))}
+        </div>
+
+        {activeScenario && (
+          <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4">
+            <p className="text-sm font-semibold text-un-white mb-1">{activeScenario.title}</p>
+            <p className="text-xs text-slate-400 mb-3">{activeScenario.description}</p>
+            {activeScenario.unDataNote && (
+              <p className="text-xs text-slate-300 bg-slate-900/40 rounded-lg p-3 mb-4">
+                {activeScenario.unDataNote}
+              </p>
+            )}
+            <h4 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">
+              Soluciones propuestas
+            </h4>
+            <div className="space-y-2">
+              {getSolutionsForScenario(activeScenario.id).map((solution) => (
+                <button
+                  key={solution.id}
+                  type="button"
+                  onClick={() => handleSelectSolution(solution)}
+                  className="w-full text-left p-3 rounded-xl border border-slate-700 bg-slate-900/40 hover:border-un-blue/50 transition-colors"
+                >
+                  <p className="text-sm font-semibold text-un-white">{solution.title}</p>
+                  <p className="text-xs text-slate-400 mt-1">{solution.description}</p>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Países con quienes negociar */}

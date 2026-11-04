@@ -5,6 +5,10 @@
  * Cada interfaz incluye comentarios explicando su propósito y campos.
  */
 
+import type { NegotiationSolution } from "./negotiations";
+
+export type { NegotiationSolution } from "./negotiations";
+
 /**
  * País miembro del Consejo de Seguridad de la ONU.
  * isP5 = true indica que es miembro permanente con derecho a veto.
@@ -249,6 +253,8 @@ export interface GameState {
   pendingConsequence: GameConsequence | null;
   /** Historial de consecuencias publicadas */
   consequences: GameConsequence[];
+  /** Solución de negociación activa seleccionada por el jugador */
+  activeNegotiationSolution: NegotiationSolution | null;
   /** Si el juego está inicializado */
   isInitialized: boolean;
   /** Si hay una acción en curso (loading) */

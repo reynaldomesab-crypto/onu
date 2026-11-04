@@ -8,7 +8,6 @@ import { useGameStore } from "@/store/useGameStore";
 import { Clause, Draft } from "@/types";
 import { Button } from "@/components/ui/Button";
 import { DayBudgetBar } from "@/components/ui/DayBudgetBar";
-import { PlayerRestrictionNotice } from "@/components/ui/PlayerRestrictionNotice";
 import { Badge } from "@/components/ui/Badge";
 import { CountryBadge } from "@/components/ui/CountryBadge";
 import { cn } from "@/utils/cn";
@@ -30,6 +29,7 @@ export const DraftingPhase: React.FC = () => {
     clearDraft,
     submitDraft,
     isLoading,
+    activeNegotiationSolution,
   } = useGameStore();
 
   const [draftTone, setDraftToneLocal] = useState<Draft["tone"]>("equilibrado");
@@ -83,7 +83,6 @@ export const DraftingPhase: React.FC = () => {
           <DayBudgetBar day={currentDay} budget={actionBudget} maxBudget={maxActionsPerDay} />
         </div>
 
-        <PlayerRestrictionNotice />
 
         <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 text-center">
           <h2 className="text-lg font-semibold text-un-white mb-4">Nuevo Borrador</h2>
@@ -129,7 +128,6 @@ export const DraftingPhase: React.FC = () => {
         <DayBudgetBar day={currentDay} budget={actionBudget} maxBudget={maxActionsPerDay} />
       </div>
 
-      <PlayerRestrictionNotice />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Panel izquierdo: Cláusulas disponibles */}
@@ -215,6 +213,18 @@ export const DraftingPhase: React.FC = () => {
                 ))}
               </div>
             </div>
+
+            {activeNegotiationSolution && (
+              <div className="mb-4 p-3 rounded-xl border border-un-blue/30 bg-un-blue/5">
+                <p className="text-xs text-slate-400 mb-1">Solución negociada</p>
+                <p className="text-sm font-semibold text-un-white">{activeNegotiationSolution.title}</p>
+                <p className="text-xs text-slate-400 mt-1">{activeNegotiationSolution.description}</p>
+                <p className="text-xs text-slate-500 mt-2">
+                  Riesgo esperado:{" "}
+                  {activeNegotiationSolution.expectedConsequence.riskLevel}
+                </p>
+              </div>
+            )}
 
             {currentDraft.clauses.length === 0 ? (
               <p className="text-slate-400 text-sm text-center">

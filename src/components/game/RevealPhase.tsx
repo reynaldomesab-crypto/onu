@@ -6,7 +6,6 @@ import React from "react";
 import { useGameStore } from "@/store/useGameStore";
 import { Button } from "@/components/ui/Button";
 import { DayBudgetBar } from "@/components/ui/DayBudgetBar";
-import { PlayerRestrictionNotice } from "@/components/ui/PlayerRestrictionNotice";
 import { CountryBadge } from "@/components/ui/CountryBadge";
 import { cn } from "@/utils/cn";
 
@@ -62,7 +61,6 @@ export const RevealPhase: React.FC = () => {
         <DayBudgetBar day={currentDay} budget={actionBudget} maxBudget={maxActionsPerDay} />
       </div>
 
-      <PlayerRestrictionNotice />
 
       {/* Resultado principal */}
       <div className={cn(
@@ -72,7 +70,7 @@ export const RevealPhase: React.FC = () => {
           : "bg-p5-red/10 border-p5-red/30"
       )}>
         <div className="text-6xl font-bold mb-2">
-          {approved ? "✅" : "❌"}
+          {approved ? "✓" : "✗"}
         </div>
         <h2 className="text-3xl font-bold mb-1">
           {approved ? "RESOLUCIÓN APROBADA" : "RESOLUCIÓN RECHAZADA"}
@@ -192,6 +190,40 @@ export const RevealPhase: React.FC = () => {
         </div>
       )}
 
+      {/* Resumen final de la presidencia del Consejo */}
+      {published && (
+        <div className="bg-slate-800/50 border border-un-blue/30 rounded-xl p-5">
+          <h2 className="text-lg font-semibold text-un-white mb-4">Resumen Final de la Presidencia</h2>
+          <p className="text-sm text-slate-300 mb-2">
+            Resolución: <span className="font-semibold text-un-white">{published.title}</span>
+          </p>
+          <p className="text-sm text-slate-300 mb-2">
+            Resultado:{" "}
+            <span className="font-semibold text-un-white">
+              {published.approved ? "Aprobada" : "Rechazada"}
+            </span>{" "}
+            · Publicada el día {published.publishedDay}
+          </p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">
+            <div className="p-3 rounded-lg bg-slate-900/30">
+              <p className="text-xs text-slate-400 uppercase">Familias alcanzadas</p>
+              <p className="text-xl font-bold text-e10-green">{published.aidFamiliesReached}</p>
+            </div>
+            <div className="p-3 rounded-lg bg-slate-900/30">
+              <p className="text-xs text-slate-400 uppercase">Sobrecosto logístico</p>
+              <p className="text-xl font-bold text-amber-400">{published.logisticsOvercostPct}%</p>
+            </div>
+            <div className="p-3 rounded-lg bg-slate-900/30">
+              <p className="text-xs text-slate-400 uppercase">Efectividad de la misión</p>
+              <p className="text-xl font-bold text-un-blue">{published.missionEffective ? "Efectiva" : "Inefectiva"}</p>
+            </div>
+          </div>
+          <p className="text-xs text-slate-400 mt-3">
+            Calificación final: {published.approved ? (published.missionEffective ? "Éxito integral" : "Aprobada con sobrecosto") : "Bloqueada por veto"}.
+          </p>
+        </div>
+      )}
+
       {/* Acciones finales */}
       <div className="flex gap-3">
         <Button variant="outline" onClick={handleBackToBriefing}>
@@ -202,7 +234,7 @@ export const RevealPhase: React.FC = () => {
           onClick={handleNewDay}
           disabled={actionBudget < 1}
         >
-          Nuevo Día (1 acción)
+          Avanzar Día (1 acción)
         </Button>
       </div>
     </div>
